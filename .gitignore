@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 *.db
 .env
 sqlite.db 
 node_modules
+=======
+*.db
+.env
+sqlite.db 
+node_modules
+>>>>>>> 3d115e4 (Updates commit)
