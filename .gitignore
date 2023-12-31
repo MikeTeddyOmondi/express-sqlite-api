@@ -1,0 +1,4 @@
+*.db
+.env
+sqlite.db 
+node_modules
