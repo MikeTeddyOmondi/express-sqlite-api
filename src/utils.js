@@ -24,6 +24,7 @@ const transport = {
 // Logger
 export const logger = pino(prettyLogs(transport));
 
+// Error handler
 export function createError(status, message) {
   const err = new Error();
   err.status = status;
