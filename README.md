@@ -1,4 +1,6 @@
-# Express Sqlite API
+# Express LibSQL(~~sqlite~~) API
+
+This application uses [libsql](https://github.com/tursodatabase/libsql/) (a fork of sqlite)
 
 Generate schema in sqlite database
 
