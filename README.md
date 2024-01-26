@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# Express SqLite API w/ Drizzle ORM
-=======
 # Express Sqlite API
 
 Generate schema in sqlite database
@@ -18,4 +15,3 @@ pnpm run:migrations
 
 ```
 
->>>>>>> 3d115e4 (Updates commit)
