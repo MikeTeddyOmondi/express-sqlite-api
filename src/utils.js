@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-exports.createError = (status, message) => {
-	const err = new Error();
-	err.status = status;
-	err.message = message;
-	return err;
-};
-=======
 import pino from "pino";
 import prettyLogs from "pino-pretty";
 import { tmpdir } from "os";
@@ -29,6 +21,7 @@ const transport = {
   ],
 };
 
+// Logger
 export const logger = pino(prettyLogs(transport));
 
 export function createError(status, message) {
@@ -37,4 +30,3 @@ export function createError(status, message) {
   err.message = message;
   return err;
 }
->>>>>>> 3d115e4 (Updates commit)
