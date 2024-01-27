@@ -9,7 +9,7 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { tasks } from "./schema.js";
-import { logger } from "./utils.js";
+import { createError, logger } from "./utils.js";
 
 config();
 
@@ -38,88 +38,111 @@ app.use(
 );
 
 // Root route
-app.get("/", (req, res) => {
+app.get("/", (req, res, next) => {
   logger.info({ success: true, message: "Application works!" });
   res.json({ success: true, message: "Application works!" });
 });
 
 app.get("/tasks", async (req, res) => {
-  const result = await db.select().from(tasks);
-  logger.info({ data: result }, "Task(s) read!");
-  res.json({ success: true, message: "Task(s) read!", data: result });
-});
-
-app.post("/tasks", async (req, res) => {
-  const public_id = uuid();
-  const { title, description } = req.body;
-  if (title === "" || description === "") {
-    logger.error(
-      "Error creating task(s): Please provide a title & a description"
-    );
-    return res.status(400).json({
-      success: false,
-      message: "Please provide a title & a description!",
-    });
+  try {
+    const result = await db.select().from(tasks);
+    logger.info({ data: result }, "Task(s) read!");
+    res.json({ success: true, message: "Task(s) read!", data: result });
+  } catch (err) {
+    logger.error(`Error reading task(s): ${err.message}`);
+    next(createError(500, `Error reading task(s): ${err.message}`));
   }
-
-  const result = await db
-    .insert(tasks)
-    .values({ public_id, title, description })
-    .returning()
-    .all();
-
-  console.log(result);
-
-  logger.info({ data: result[0] }, "Task(s) created!");
-  res
-    .status(201)
-    .json({ success: true, message: "Task(s) created!", data: result[0] });
 });
 
-app.get("/tasks/:pid", async (req, res) => {
-  const { pid } = req.params;
-  const result = await db.select().from(tasks).where(eq(tasks.public_id, pid));
+app.post("/tasks", async (req, res, next) => {
+  try {
+    const public_id = uuid();
+    const { title, description } = req.body;
+    if (title === "" || description === "") {
+      logger.error(
+        "Error creating task(s): Please provide a title & a description"
+      );
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a title & a description!",
+      });
+    }
 
-  if (result.length === 0) {
-    logger.error(`Tasks(s): ${pid} not found!`);
-    return res.status(404).json({
-      success: false,
-      message: "Task(s) not found!",
-    });
+    const result = await db
+      .insert(tasks)
+      .values({ public_id, title, description })
+      .returning()
+      .all();
+
+    console.log(result);
+
+    logger.info({ data: result[0] }, "Task(s) created!");
+    res
+      .status(201)
+      .json({ success: true, message: "Task(s) created!", data: result[0] });
+  } catch (err) {
+    logger.error(`Error creating task(s): ${err.message}`);
+    next(createError(500, `Error creating task(s): ${err.message}`));
   }
-
-  logger.info({ data: result }, "Task(s) read");
-  res.json({ success: true, message: "Task(s) read!", data: result });
 });
 
-app.put("/tasks/:pid", async (req, res) => {
-  const { pid } = req.params;
-  const { title, description } = req.body;
-  if (title === "" || description === "") {
-    logger.error(
-      "Error updating task(s): Please provide a title & a description to update!"
-    );
-    return res.status(400).json({
-      success: false,
-      message: "Please provide a title & a description to update!",
-    });
+app.get("/tasks/:pid", async (req, res, next) => {
+  try {
+    const { pid } = req.params;
+    const result = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.public_id, pid));
+
+    if (result.length === 0) {
+      logger.error(`Tasks(s): ${pid} not found!`);
+      return res.status(404).json({
+        success: false,
+        message: "Task(s) not found!",
+      });
+    }
+
+    logger.info({ data: result }, "Task(s) read");
+    res.json({ success: true, message: "Task(s) read!", data: result });
+  } catch (err) {
+    logger.error(`Error reading task(s): ${err.message}`);
+    next(createError(500, `Error reading task(s): ${err.message}`));
   }
-
-  const result = await db
-    .update(tasks)
-    .set({ title, description })
-    .where(eq(tasks.public_id, pid))
-    .returning();
-
-  logger.info({ data: result[0] }, `Task(s): ${pid} updated!`);
-  res.json({
-    success: true,
-    message: "Task(s) updated!",
-    data: result[0],
-  });
 });
 
-app.put("/tasks/complete/:pid", async (req, res) => {
+app.put("/tasks/:pid", async (req, res, next) => {
+  try {
+    const { pid } = req.params;
+    const { title, description } = req.body;
+    if (title === "" || description === "") {
+      logger.error(
+        "Error updating task(s): Please provide a title & a description to update!"
+      );
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a title & a description to update!",
+      });
+    }
+
+    const result = await db
+      .update(tasks)
+      .set({ title, description })
+      .where(eq(tasks.public_id, pid))
+      .returning();
+
+    logger.info({ data: result[0] }, `Task(s): ${pid} updated!`);
+    res.json({
+      success: true,
+      message: "Task(s) updated!",
+      data: result[0],
+    });
+  } catch (err) {
+    logger.error(`Error updating task(s): ${err.message}`);
+    next(createError(500, `Error reading task(s): ${err.message}`));
+  }
+});
+
+app.put("/tasks/complete/:pid", async (req, res, next) => {
   try {
     const { pid } = req.params;
     const fetchResult = await db
@@ -140,37 +163,40 @@ app.put("/tasks/complete/:pid", async (req, res) => {
     });
   } catch (error) {
     logger.error(`Error completing task(s): ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: `Error completing task(s): ${error.message}`,
-    });
+    next(createError(500, `Error completing task(s): ${err.message}`));
   }
 });
 
-app.delete("/tasks/:pid", async (req, res) => {
-  const { pid } = req.params;
-  const result = await db
-    .delete(tasks)
-    .where(eq(tasks.public_id, pid))
-    .returning();
-  if (result.length === 0) {
-    logger.error(`Error deleting task(s): ${pid} not found!`);
-    return res.status(404).json({
-      success: false,
-      message: `Task(s): ${pid} not found!`,
+app.delete("/tasks/:pid", async (req, res, next) => {
+  try {
+    const { pid } = req.params;
+    const result = await db
+      .delete(tasks)
+      .where(eq(tasks.public_id, pid))
+      .returning();
+    if (result.length === 0) {
+      logger.error(`Error deleting task(s): ${pid} not found!`);
+      return res.status(404).json({
+        success: false,
+        message: `Task(s): ${pid} not found!`,
+      });
+    }
+    res.json({
+      success: true,
+      message: `Task(s): ${pid} deleted!`,
+      data: result,
     });
+  } catch (err) {
+    logger.error(`Error deleting task(s): ${error.message}`);
+    next(createError(500, `Error deleting task(s): ${err.message}`));
   }
-  res.json({
-    success: true,
-    message: `Task(s): ${pid} deleted!`,
-    data: result,
-  });
 });
 
 // 404 route
-app.get("*", (req, res) => {
+app.get("*", (req, res, next) => {
   logger.error("Resource Not Found!");
   res.json({ success: false, message: "Resource Not Found!" });
+  next(createError(500, `Error deleting task(s): ${err.message}`));
 });
 
 // Error Middleware
@@ -189,5 +215,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3489;
 
 app.listen(PORT, () => {
-  console.log(`Server is running in http://localhost:${PORT}`);
+  console.log(`Server listening for requests: http://localhost:${PORT}`);
 });
