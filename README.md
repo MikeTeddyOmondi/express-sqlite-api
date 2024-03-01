@@ -17,3 +17,7 @@ pnpm run:migrations
 
 ```
 
+Benchmarks: Using the rewrk HTTP load benchmarker
+```shell 
+rewrk -c 256 -d 60s -h http://localhost:3489/todos --pct
+```
