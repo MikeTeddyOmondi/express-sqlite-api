@@ -43,7 +43,7 @@ app.get("/", (req, res, next) => {
   res.json({ success: true, message: "Application works!" });
 });
 
-app.get("/tasks", async (req, res) => {
+app.get("/tasks", async (req, res, next) => {
   try {
     const result = await db.select().from(tasks);
     logger.info({ data: result }, "Task(s) read!");
@@ -195,8 +195,7 @@ app.delete("/tasks/:pid", async (req, res, next) => {
 // 404 route
 app.get("*", (req, res, next) => {
   logger.error("Resource Not Found!");
-  res.json({ success: false, message: "Resource Not Found!" });
-  next(createError(500, `Error deleting task(s): ${err.message}`));
+  next(createError(500, `Resource Not Found!`));
 });
 
 // Error Middleware
