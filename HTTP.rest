@@ -1,0 +1,33 @@
+### GET tasks
+GET http://localhost:3489/tasks
+
+### POST tasks
+POST http://localhost:3489/tasks
+Content-Type: application/json
+
+{
+    "title": "foo",
+    "description": "desc"
+}
+
+### GET one task
+GET http://localhost:3489/tasks/3741772d-f238-429d-8110-51e593f97e67
+Content-Type: application/json
+
+### Complete task
+PUT http://localhost:3489/tasks/complete/3741772d-f238-429d-8110-51e593f97e67
+Content-Type: application/json
+
+### Update task
+PUT http://localhost:3489/tasks/3741772d-f238-429d-8110-51e593f97e67
+Content-Type: application/json
+
+{
+    "title": "foo updated",
+    "description": "desc updated"
+}
+
+### Delete task
+DELETE http://localhost:3489/tasks/3741772d-f238-429d-8110-51e593f97e67
+
+### 

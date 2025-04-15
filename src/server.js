@@ -18,11 +18,11 @@ config();
 // const db = drizzle(sqlite);
 
 // Libsql config
-const { LIBSQL_URI } = process.env;
+const { LIBSQL_URI, DATABASE_AUTH_TOKEN } = process.env;
 
 const libsqlClient = createClient({
   url: LIBSQL_URI,
-  // authToken: "DATABASE_AUTH_TOKEN",
+  authToken: DATABASE_AUTH_TOKEN,
 });
 
 const db = drizzle(libsqlClient);
@@ -124,6 +124,19 @@ app.put("/tasks/:pid", async (req, res, next) => {
       });
     }
 
+    const fetchResult = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.public_id, pid));
+
+    if (fetchResult.length === 0) {
+      logger.error(`Tasks(s): ${pid} not found!`);
+      return res.status(404).json({
+        success: false,
+        message: "Task(s) not found!",
+      });
+    }
+
     const result = await db
       .update(tasks)
       .set({ title, description })
@@ -149,6 +162,15 @@ app.put("/tasks/complete/:pid", async (req, res, next) => {
       .select()
       .from(tasks)
       .where(eq(tasks.public_id, pid));
+
+    if (fetchResult.length === 0) {
+      logger.error(`Tasks(s): ${pid} not found!`);
+      return res.status(404).json({
+        success: false,
+        message: "Task(s) not found!",
+      });
+    }
+
     const result = await db
       .update(tasks)
       .set({ completed: fetchResult[0].completed ? false : true })
@@ -170,6 +192,19 @@ app.put("/tasks/complete/:pid", async (req, res, next) => {
 app.delete("/tasks/:pid", async (req, res, next) => {
   try {
     const { pid } = req.params;
+    const fetchResult = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.public_id, pid));
+
+    if (fetchResult.length === 0) {
+      logger.error(`Tasks(s): ${pid} not found!`);
+      return res.status(404).json({
+        success: false,
+        message: "Task(s) not found!",
+      });
+    }
+
     const result = await db
       .delete(tasks)
       .where(eq(tasks.public_id, pid))
